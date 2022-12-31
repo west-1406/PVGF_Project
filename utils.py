@@ -1,6 +1,12 @@
+import requests
+import json
+
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
+
+# 模型相关
+from predict import PredictPower
 
 # 滑动窗口数据
 def time_series_to_supervised(data, n_in=1, n_out=1, dropnan=True):
@@ -62,3 +68,61 @@ def Processing_data(filepath, n_steps_in, n_steps_out, scale=1000):
     train_X = train_X1.reshape((train_X1.shape[0], n_steps_in, data1.shape[1]))
     test_X = test_X1.reshape((test_X1.shape[0], n_steps_in, data1.shape[1]))
     return train_X, train_y, test_X, test_y, data_x, data1
+
+# 创建数据集
+def BuildDateset(dataset,dataset_path):
+    with open(dataset_path,'w+') as file:
+        for data in dataset:
+            for val in data.values():
+                file.write(f'{val} ')
+            file.write('\n')
+
+# 获取数据集
+def GetDataset(stationId,startTime,endTime,save=False):
+    '''
+        输入参数：
+            ststionId : 采集数据的基站ID
+            startTime : 起始时间戳,毫秒
+            endTime   : 结束时间戳,毫秒
+            save      : 是否保存数据,默认False
+        输出参数：
+            dataset   : 样本数据,dict
+    '''
+    data_url = f'https://power.real-smart.tech/api/system/data/station/forecast/material/recent?stationId={stationId}&startTime={startTime}&endTime={endTime}'
+    headers = {
+        'AuthSysCode':'RSPV',
+        'Authorization':'YWTE#fqrof1rv9iwym037znn6mjciji4g1281'
+    }
+    # 获取响应的数据并解析
+    response = requests.get(data_url,headers=headers)
+    if response.status_code == 200:
+        response_data = response.json()['data']
+        dataset = list(filter(lambda d:d['solarRadiation'],response_data))
+        # 写入数据集
+        if save:
+            BuildDateset(dataset=dataset,dataset_path=f'./dataset/{stationId}_{startTime}_{endTime}.txt')
+    else:
+        return None       
+
+
+# 推送测试数据
+def PushPredictData(stationId,startTime,step,timeGap=3600000):
+    push_url = 'https://power.real-smart.tech/api/system/data/station/forecast/result/recent/notify'
+    data1={
+        "stationId":stationId,
+        "startTime": startTime,
+        "timeGap" : timeGap,
+        "step": step,
+        "data": PredictPower(stationId,startTime,step)
+    }
+    headers = {
+        'AuthSysCode' : 'RSPV',
+        'Authorization' : 'YWTE#fqrof1rv9iwym037znn6mjciji4g1281',
+        'Content-Type':'application/json'
+    }
+    response=requests.post(push_url,data=json.dumps(data1),headers=headers)
+    print(response.text)
+
+if __name__ == '__main__':
+    # 样例测试
+    PushPredictData(98,'1672070400000',4)
