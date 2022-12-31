@@ -43,7 +43,7 @@ def time_series_to_supervised(data, n_in=1, n_out=1, dropnan=True):
 
 
 # 读取处理数据
-def Processing_data(filepath, n_steps_in, n_steps_out, scale=1000):
+def Processing_data(filepath, n_steps_in, n_steps_out, scale=1000,model_type = None):
     # 读取数据
     dataset = pd.read_csv(filepath,parse_dates=['time'], index_col=['time'],
                           usecols=range(1,36))
@@ -65,8 +65,11 @@ def Processing_data(filepath, n_steps_in, n_steps_out, scale=1000):
     data_y = processedData1.loc[:, 'ws_10':'power']  # 输出序列的长度和数据
     train_X1, test_X1, train_y, test_y = train_test_split(data_x.values, data_y.values, test_size=0.3, shuffle=False)
     # 对训练集和测试集升维，满足LSTM的输入维度
-    train_X = train_X1.reshape((train_X1.shape[0], n_steps_in, data1.shape[1]))
-    test_X = test_X1.reshape((test_X1.shape[0], n_steps_in, data1.shape[1]))
+    if model_type != 'XGBoost' and model_type != 'LightGBM':
+        train_X = train_X1.reshape((train_X1.shape[0], n_steps_in, data1.shape[1]))
+        test_X = test_X1.reshape((test_X1.shape[0], n_steps_in, data1.shape[1]))
+    else:
+        train_X,test_X = train_X1,test_X1
     return train_X, train_y, test_X, test_y, data_x, data1
 
 # 创建数据集
@@ -122,6 +125,8 @@ def PushPredictData(stationId,startTime,step,timeGap=3600000):
     }
     response=requests.post(push_url,data=json.dumps(data1),headers=headers)
     print(response.text)
+
+# 
 
 if __name__ == '__main__':
     # 样例测试
