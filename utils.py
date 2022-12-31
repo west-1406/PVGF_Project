@@ -81,16 +81,17 @@ def BuildDateset(dataset,dataset_path):
             file.write('\n')
 
 # 获取数据集
-def GetDataset(stationId,startTime,endTime,save=False):
+def GetDataset(stationId,endTime,day=5,save=False):
     '''
         输入参数：
             ststionId : 采集数据的基站ID
-            startTime : 起始时间戳,毫秒
-            endTime   : 结束时间戳,毫秒
+            endTime : 起始时间戳,毫秒
+            day       : 选择时间戳,毫秒
             save      : 是否保存数据,默认False
         输出参数：
             dataset   : 样本数据,dict
     '''
+    startTime = endTime-24*60*60*1000*day
     data_url = f'https://power.real-smart.tech/api/system/data/station/forecast/material/recent?stationId={stationId}&startTime={startTime}&endTime={endTime}'
     headers = {
         'AuthSysCode':'RSPV',
@@ -104,19 +105,19 @@ def GetDataset(stationId,startTime,endTime,save=False):
         # 写入数据集
         if save:
             BuildDateset(dataset=dataset,dataset_path=f'./dataset/{stationId}_{startTime}_{endTime}.txt')
+        return dataset
     else:
         return None       
 
-
 # 推送测试数据
-def PushPredictData(stationId,startTime,step,timeGap=3600000):
+def PushPredictData(stationId,startTime,step,dataset,timeGap=3600000):
     push_url = 'https://power.real-smart.tech/api/system/data/station/forecast/result/recent/notify'
     data1={
         "stationId":stationId,
         "startTime": startTime,
         "timeGap" : timeGap,
         "step": step,
-        "data": PredictPower(stationId,startTime,step)
+        "data": PredictPower(dataset,step)
     }
     headers = {
         'AuthSysCode' : 'RSPV',
@@ -124,10 +125,10 @@ def PushPredictData(stationId,startTime,step,timeGap=3600000):
         'Content-Type':'application/json'
     }
     response=requests.post(push_url,data=json.dumps(data1),headers=headers)
-    print(response.text)
+    return response.text
 
 # 
 
 if __name__ == '__main__':
     # 样例测试
-    PushPredictData(98,'1672070400000',4)
+    PushPredictData(98,1672070400000,4)
