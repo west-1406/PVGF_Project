@@ -2,7 +2,7 @@ import requests
 import json
 
 import pandas as pd
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler,StandardScaler
 from sklearn.model_selection import train_test_split
 
 # 模型相关
@@ -41,36 +41,42 @@ def time_series_to_supervised(data, n_in=1, n_out=1, dropnan=True):
         agg.dropna(inplace=True)
     return agg
 
-
 # 读取处理数据
-def Processing_data(filepath, n_steps_in, n_steps_out, scale=1000,model_type = None):
+def Processing_data(filepath, n_steps_in, n_steps_out, scale=100,model_type = None,scaler_type = 'MinMax'):
     # 读取数据
-    dataset = pd.read_csv(filepath,parse_dates=['time'], index_col=['time'],
-                          usecols=range(1,36))
+    dataset = pd.read_csv(filepath,usecols=range(4,18))
+    # 文本转换为数字(关键字缺失，目前留空)
+    # 测试专用
+    del dataset['wind_direction']
+    del dataset['text']
+    text2dig = {
+        
+    }
+    for text,digit in text2dig.items():
+        dataset.replace(text,digit,inplace=True)
     # 数据插值，补充空白值
-    data1 = dataset.interpolate()
+    dataset = dataset.interpolate()
     # 数据归一化(除power外)
-    colums = ['ws_10', 'ws_30', 'ws_50', 'ws_70', 'ws_90', 'ws_120', 'ws_150', 'ws_200',
-              'wd_10', 'wd_30', 'wd_50', 'wd_70', 'wd_90', 'wd_120', 'wd_150', 'wd_200', 'tem_10', 'tem_30',
-              'tem_50', 'tem_70', 'tem_90', 'tem_120', 'tem_150', 'tem_200', 'rhu_10', 'rhu_30', 'rhu_50',
-              'rhu_70', 'rhu_90', 'rhu_120', 'rhu_150', 'rhu_200', 'sr']
-    # 最大最小值归一化
-    scaler = MinMaxScaler()
+    colums = ['humidity','vapor_pressure','temperature','precip','solar_radiation',
+              'pressure','wind_speed','wind_direction_degree','feels_like',
+              'wind_scale','code']
+    # 特征归一化
+    scaler = MinMaxScaler() if scaler_type == 'MinMax' else StandardScaler()
     for col in colums:
-        data1[col] = scaler.fit_transform(dataset[col].values.reshape(-1, 1))
-    data1['power']=data1['power']/scale
+        dataset[col] = scaler.fit_transform(dataset[col].values.reshape(-1, 1))
+    dataset['power']=dataset['power']/scale
     # 划分数据集
-    processedData1 = time_series_to_supervised(data1, n_steps_in, n_steps_out)
-    data_x = processedData1.loc[:, f'ws_10(t-{n_steps_in})':'power(t-1)']  # 输入序列的长度和数据
-    data_y = processedData1.loc[:, 'ws_10':'power']  # 输出序列的长度和数据
+    processeddataset = time_series_to_supervised(dataset, n_steps_in, n_steps_out)
+    data_x = processeddataset.loc[:, f'humidity(t-{n_steps_in})':'power(t-1)']  # 输入序列的长度和数据
+    data_y = processeddataset.loc[:, 'humidity':'power']  # 输出序列的长度和数据
     train_X1, test_X1, train_y, test_y = train_test_split(data_x.values, data_y.values, test_size=0.3, shuffle=False)
     # 对训练集和测试集升维，满足LSTM的输入维度
     if model_type != 'XGBoost' and model_type != 'LightGBM':
-        train_X = train_X1.reshape((train_X1.shape[0], n_steps_in, data1.shape[1]))
-        test_X = test_X1.reshape((test_X1.shape[0], n_steps_in, data1.shape[1]))
+        train_X = train_X1.reshape((train_X1.shape[0], n_steps_in, dataset.shape[1]))
+        test_X = test_X1.reshape((test_X1.shape[0], n_steps_in, dataset.shape[1]))
     else:
         train_X,test_X = train_X1,test_X1
-    return train_X, train_y, test_X, test_y, data_x, data1
+    return train_X, train_y, test_X, test_y, data_x, dataset
 
 # 创建数据集
 def BuildDateset(dataset,dataset_path):
