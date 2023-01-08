@@ -6,7 +6,8 @@ from keras import optimizers
 from model.Model import LSTMnet
 from utils import Processing_data
 
-def train(opt):
+# LSTM的训练函数
+def trainLSTM(opt):
     # 数据部分
     dataset_path = opt.DatasetPath
     input_seq_length = opt.InputSeqLength
@@ -26,6 +27,9 @@ def train(opt):
     model.save(f'{opt.SavePath}/{opt.epoch}.h5')
 
     
+# Transform的训练函数
+def trainTransform(opt):
+    pass
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -39,4 +43,5 @@ if __name__ == '__main__':
     parser.add_argument('--FeatureSize', type=int,default=34, help='特征尺寸')
     parser.add_argument('--OutputSize', type=int, default=1,help='输出尺寸')
     opt = parser.parse_args()
-    train(opt)
+    trainLSTM(opt)
+    # trainTransform(opt)
