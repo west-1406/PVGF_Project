@@ -2,6 +2,14 @@ from keras.models import Sequential
 from keras.layers import Dense, Dropout
 from keras.layers import LSTM
 
+import joblib
+
+# XGBoost API接口
+def XGBoostModel(input_data):
+    model = joblib.load("./checkpoints/XGBoost.pkl")
+    return model.predict(input_data)
+
+
 # demo测试样例
 def LSTMnet(n_steps_in, out, features):
     lstm_net = Sequential([
