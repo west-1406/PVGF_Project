@@ -17,20 +17,25 @@ def TrainXGBoost(dataset_path, input_seq_length, output_size):
     
     # 参数设定
     other_params = {
-        'learning_rate': 0.1, 
-        'n_estimators': 300, 
+        'eta':0.3,
+        'min_child_weight':1,
         'max_depth': 10, 
-        'min_child_weight': 1,
-        'seed': 0, 
+        'learning_rate': 0.1, 
+        'gamma': 0, 
+        'max_delta_step':0.2,
         'subsample': 0.8, 
         'colsample_bytree': 0.8, 
-        'gamma': 0, 
+        'colsample_bylevel':1,
+        'lambda':1,
         'reg_alpha': 0, 
-        'reg_lambda': 1
+        'reg_lambda': 1,
+        'n_estimators': 800, 
+        'seed': 0, 
     }
 
     # XGBoost训练
     model = MultiOutputRegressor(xgb.XGBRegressor(objective='reg:squarederror',**other_params))
+
     model.fit(train_X, train_y)
 
     # 保存模型
@@ -43,8 +48,9 @@ def TrainXGBoost(dataset_path, input_seq_length, output_size):
 
     # 测试集结果
     test_loss = test_y-model.predict(test_X)
-    data = pd.DataFrame(test_loss)
     data.to_excel("test_loss.xlsx")
+    print(sum(abs(train_loss[:,-1]))/len(train_loss[:,-1])*10000)
+    print(sum(abs(test_loss[:,-1]))/len(test_loss[:,-1])*10000)
 
 # 测试端口
 def TestXGBoost(dataset_path, input_seq_length, output_size):
@@ -55,13 +61,13 @@ def TestXGBoost(dataset_path, input_seq_length, output_size):
 
     # 训练集结果
     train_loss = train_y-model.predict(train_X)
-    data = pd.DataFrame(train_loss)
-    data.to_excel("train_loss.xlsx")
-
+    print(sum(abs(train_loss[:,-1]))/len(train_loss[:,-1])*10000)
     # 测试集结果
     test_loss = test_y-model.predict(test_X)
-    data = pd.DataFrame(test_loss)
-    data.to_excel("test_loss.xlsx")
+    print(sum(abs(test_loss[:,-1]))/len(test_loss[:,-1])*10000)
+    
+     
+
     
 
 
@@ -77,5 +83,5 @@ if __name__ == '__main__':
     input_seq_length = opt.InputSeqLength
     output_size = opt.OutputSize
     
-    TestXGBoost(dataset_path, input_seq_length, output_size)
-    # TrainXGBoost(dataset_path, input_seq_length, output_size)
+    # TestXGBoost(dataset_path, input_seq_length, output_size)
+    TrainXGBoost(dataset_path, input_seq_length, output_size)
