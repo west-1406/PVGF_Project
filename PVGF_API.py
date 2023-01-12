@@ -24,7 +24,7 @@ def PVGF(stationId,startTime,step):
             status    : 响应代码
     '''
     # 计算需要的时间段
-    dataset = GetDataset(stationId,startTime,day=3)
+    dataset = GetDataset(stationId,startTime,day=12)
     output_data = TransformData(dataset)
     status = PushPredictData(stationId,startTime,step,output_data)
     print(status)
@@ -33,8 +33,8 @@ def PVGF(stationId,startTime,step):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--stationId',type=int,default=98,help='基站ID')
-    parser.add_argument('--startTime',type=int,default=1672491600000,help='预测起始时间')
+    parser.add_argument('--stationId',type=int,default=115,help='基站ID')
+    parser.add_argument('--startTime',type=int,default=1673532584419,help='预测起始时间')
     parser.add_argument('--step',type=int,default=4,help='步长')
     opt = parser.parse_args()
 

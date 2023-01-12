@@ -1,6 +1,8 @@
-from model.Model import XGBoostModel
+from model.Model import XGBoostModel,LSTMnet
+from tensorflow.keras.models import load_model
 
-model_type = {'XGBoost':XGBoostModel}
+LSTMnetFunc = load_model('./checkpoints/400.h5')
+model_type = {'LSTMnet':LSTMnetFunc}
 
 # 数据滑动更新
 def dataUpdate(dataset,update):
