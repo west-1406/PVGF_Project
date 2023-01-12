@@ -42,13 +42,15 @@ def time_series_to_supervised(data, n_in=1, n_out=1, dropnan=True):
     return agg
 
 # 读取处理数据
-def Processing_data(filepath, n_steps_in, n_steps_out, scale=1000,model_type = None,scaler_type = 'MinMax'):
+def Processing_data(filepath, n_steps_in, n_steps_out, scale=400000,model_type = None,scaler_type = 'MinMax'):
     # 读取数据
-    dataset = pd.read_csv(filepath,usecols=range(4,18))
+    dataset = pd.read_csv(filepath,usecols=range(1,18))
     # 文本转换为数字(关键字缺失，目前留空)
     # 测试专用
     del dataset['wind_direction']
     del dataset['text']
+    del dataset['latitude']
+    del dataset['longitude']
     text2dig = {
         
     }
@@ -57,7 +59,7 @@ def Processing_data(filepath, n_steps_in, n_steps_out, scale=1000,model_type = N
     # 数据插值，补充空白值
     dataset = dataset.interpolate()
     # 数据归一化(除power外)
-    colums = ['humidity','vapor_pressure','temperature','precip','solar_radiation',
+    colums = ['date','humidity','vapor_pressure','temperature','precip','solar_radiation',
               'pressure','wind_speed','wind_direction_degree','feels_like',
               'wind_scale','code']
     # 特征归一化
@@ -67,9 +69,9 @@ def Processing_data(filepath, n_steps_in, n_steps_out, scale=1000,model_type = N
     dataset['power']=dataset['power']/scale
     # 划分数据集
     processeddataset = time_series_to_supervised(dataset, n_steps_in, n_steps_out)
-    data_x = processeddataset.loc[:, f'humidity(t-{n_steps_in})':'power(t-1)']  # 输入序列的长度和数据
-    data_y = processeddataset.loc[:, 'humidity':'power']  # 输出序列的长度和数据
-    train_X1, test_X1, train_y, test_y = train_test_split(data_x.values, data_y.values, test_size=0.1, shuffle=False)
+    data_x = processeddataset.loc[:, f'date(t-{n_steps_in})':'power(t-1)']  # 输入序列的长度和数据
+    data_y = processeddataset.loc[:, 'date':'power']  # 输出序列的长度和数据
+    train_X1, test_X1, train_y, test_y = train_test_split(data_x.values, data_y.values, test_size=0.2, shuffle=False)
     # 对训练集和测试集升维，满足LSTM的输入维度
     if model_type != 'XGBoost' and model_type != 'LightGBM':
         train_X = train_X1.reshape((train_X1.shape[0], n_steps_in, dataset.shape[1]))
