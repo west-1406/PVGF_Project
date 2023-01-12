@@ -19,8 +19,8 @@ def TrainXGBoost(dataset_path, input_seq_length, output_size):
     other_params = {
         'eta':0.3,
         'min_child_weight':1,
-        'max_depth': 10, 
-        'learning_rate': 0.1, 
+        'max_depth': 6, 
+        'learning_rate': 0.4, 
         'gamma': 0, 
         'max_delta_step':0.2,
         'subsample': 0.8, 
@@ -29,14 +29,14 @@ def TrainXGBoost(dataset_path, input_seq_length, output_size):
         'lambda':1,
         'reg_alpha': 0, 
         'reg_lambda': 1,
-        'n_estimators': 800, 
+        'n_estimators': 100, 
         'seed': 0, 
     }
 
     # XGBoost训练
     model = MultiOutputRegressor(xgb.XGBRegressor(objective='reg:squarederror',**other_params))
 
-    model.fit(train_X, train_y)
+    model.fit(train_X, train_y,verbose=1)
 
     # 保存模型
     joblib.dump(model, "./checkpoints/XGBoost.pkl")
@@ -83,5 +83,5 @@ if __name__ == '__main__':
     input_seq_length = opt.InputSeqLength
     output_size = opt.OutputSize
     
-    # TestXGBoost(dataset_path, input_seq_length, output_size)
-    TrainXGBoost(dataset_path, input_seq_length, output_size)
+    TestXGBoost(dataset_path, input_seq_length, output_size)
+    # TrainXGBoost(dataset_path, input_seq_length, output_size)
