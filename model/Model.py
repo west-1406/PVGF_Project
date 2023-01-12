@@ -1,6 +1,6 @@
-from keras.models import Sequential
-from keras.layers import Dense, Dropout
-from keras.layers import LSTM
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Dropout,Activation
+from tensorflow.keras.layers import LSTM
 
 import joblib
 
@@ -13,11 +13,15 @@ def XGBoostModel(input_data):
 # demo测试样例
 def LSTMnet(n_steps_in, out, features):
     lstm_net = Sequential([
-        LSTM(96, return_sequences=True, input_shape=(n_steps_in, features)),
+        LSTM(1024, return_sequences=True, input_shape=(n_steps_in, features)),
         Dropout(0.2),
-        LSTM(64, return_sequences=False),
+        LSTM(512, return_sequences=False),
         Dropout(0.2),
-        Dense(32),
+        Dense(1024),
+        Activation("linear"),
+        Dropout(0.2),
+        Dense(512),
+        Activation("linear"),
         Dropout(0.2),
         Dense(out),
     ])
