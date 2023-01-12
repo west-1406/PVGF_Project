@@ -110,6 +110,7 @@ def GetDataset(stationId,endTime,day=5,save=False):
     if response.status_code == 200:
         response_data = response.json()['data']
         dataset = list(filter(lambda d:d['solarRadiation'],response_data))
+        dataset = list(filter(lambda d:d['stationId'],dataset))
         # 写入数据集
         if save:
             BuildDateset(dataset=dataset,dataset_path=f'./dataset/{stationId}_{startTime}_{endTime}.txt')
