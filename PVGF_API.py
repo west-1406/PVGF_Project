@@ -24,6 +24,15 @@ datakey = ['dataTime','humidity','vaporPressure','temperature','precip','solarRa
               'pressure','windSpeed','windDirectionDegree','feelsLike','windScale','weatherCode','power']
 
 
+# 将标准时间转换为分钟数字小数（0.0-24.0），作为特征输入
+def timeStamp1(timeNum):
+    timeStamp = float(timeNum / 1000)
+    timeArray = time.localtime(timeStamp)
+    # 转换为标准时间格式
+    otherStyleTime = time.strftime("%Y-%m-%d %H:%M:%S", timeArray)
+    return float(int(otherStyleTime.split()[1].split(':')[0])+int(otherStyleTime.split(":")[1])/100)
+  
+ #将标准时间转为0-24作为特征输入
 def timeStamp(timeNum): 
     timeStamp = float(timeNum/1000) 
     timeArray = time.localtime(timeStamp) 
