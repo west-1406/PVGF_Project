@@ -41,6 +41,42 @@ def time_series_to_supervised(data, n_in=1, n_out=1, dropnan=True):
         agg.dropna(inplace=True)
     return agg
 
+# 赵全营数据（2023/2/6）
+def Processing_data1(filepath, n_steps_in, n_steps_out, scale=10000, model_type=None, scaler_type='MinMax'):
+    # 读取数据
+    dataset = pd.read_csv(filepath,encoding="gbk")
+    text2dig = {
+    }
+    for text, digit in text2dig.items():
+        dataset.replace(text, digit, inplace=True)
+    # 数据插值，补充空白值
+    dataset = dataset.interpolate()
+    del dataset['Unnamed: 0']
+    # 数据归一化(除power外)
+    # 读取所有的列索引，并去除power列
+    colums = list(dataset.columns.values)
+    colums.remove('power')
+    # 将power移到最后一行
+    dataset['power']=dataset.pop('power')
+    print(dataset)
+    # 特征归一化
+    scaler = MinMaxScaler() if scaler_type == 'MinMax' else StandardScaler()
+    for col in colums:
+        dataset[col] = scaler.fit_transform(dataset[col].values.reshape(-1, 1))
+    dataset['power'] = dataset['power'] / scale
+    # 划分数据集
+    processeddataset = time_series_to_supervised(dataset, n_steps_in, n_steps_out)
+    data_x = processeddataset.loc[:, f'data_date(t-{n_steps_in})':'power(t-1)']  # 输入序列的长度和数据
+    data_y = processeddataset.loc[:, 'data_date':'power']  # 输出序列的长度和数据
+    train_X1, test_X1, train_y, test_y = train_test_split(data_x.values, data_y.values, test_size=0.2, shuffle=False)
+    # 对训练集和测试集升维，满足LSTM的输入维度
+    if model_type != 'XGBoost' and model_type != 'LightGBM':
+        train_X = train_X1.reshape((train_X1.shape[0], n_steps_in, dataset.shape[1]))
+        test_X = test_X1.reshape((test_X1.shape[0], n_steps_in, dataset.shape[1]))
+    else:
+        train_X, test_X = train_X1, test_X1
+    return train_X, train_y, test_X, test_y, data_x, dataset
+
 # 读取处理数据
 def Processing_data(filepath, n_steps_in, n_steps_out, scale=400000,model_type = None,scaler_type = 'MinMax'):
     # 读取数据
